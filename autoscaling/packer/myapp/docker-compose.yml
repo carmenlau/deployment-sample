@@ -1,0 +1,6 @@
+version: '3'
+services:
+  web:
+    image: quay.io/carmenlau/demo-api:v1
+    ports:
+     - "80:3000"
