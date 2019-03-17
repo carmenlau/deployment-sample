@@ -1,0 +1,91 @@
+Deploy Auto Scaling Group via CloudFormation in AWS
+22 Mar 2019
+
+Carmen Lau
+
+* Benefit
+
+- Support horizontal scaling from day one
+- Reproducible Infrastructure
+- Reduce downtime during deployment
+
+* Infrastructure
+
+.code aws-autoscaling/infrastructure.txt
+ 
+* Create Machine Image
+
+*Tool*
+.link https://www.packer.io/ Packer - a tools to build machine images
+
+*Demonstration*
+.link https://github.com/carmenlau/deployment-sample/tree/master/autoscaling/packer
+
+* Create packer template
+.code aws-autoscaling/ami-builder.txt
+
+* Provisioners
+.code aws-autoscaling/ami-provisioners.txt
+
+More provisioners options
+.link https://www.packer.io/docs/provisioners/shell.html
+
+* Run packer
+
+- IAM policies for running packer
+
+.link https://www.packer.io/docs/builders/amazon.html#iam-task-or-instance-role
+
+- Run packer with template
+    AWS_ACCESS_KEY_ID=<id> \
+        AWS_SECRET_ACCESS_KEY=<key> \
+        packer build ami.json
+
+* CloudFormation templates
+
+- Find CloudFormation sample templates
+.link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-sample-templates.html Cloudformation Template
+
+- The template that we used in the demo
+.link https://s3-ap-southeast-1.amazonaws.com/cloudformation-templates-ap-southeast-1/AutoScalingRollingUpdates.template
+
+* Update template
+
+- Parameters
+
+.code aws-autoscaling/AutoScalingRollingUpdates.txt /1 OMIT/,/2 OMIT/
+
+* Update template - Config cloud-init via user data
+
+1. Create docker-compose.override.yml to specify the sever docker image
+2. Call the start app script to pull start start the docker image, and check if the server is ready
+3. Send success signal to CloudFormation to indicate the EC2 is ready
+
+.link https://github.com/carmenlau/deployment-sample/blob/master/autoscaling/AutoScalingRollingUpdates.template Full example 
+.link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-signal.html cfn-signal
+
+* Scaling rules
+
+.code aws-autoscaling/AutoScalingRollingUpdates.txt /3 OMIT/,/4 OMIT/
+
+* Scaling rules
+
+.code aws-autoscaling/AutoScalingRollingUpdates.txt /4 OMIT/,/5 OMIT/
+
+* Update docker image via CI
+
+    AWS_ACCESS_KEY_ID=<id> \
+        AWS_SECRET_ACCESS_KEY=<key> \
+        aws cloudformation update-stack --region <region> --stack-name <stack_name> \
+            --role-arn arn:aws:iam::<project_id>:role/<role_name> \
+            --capabilities CAPABILITY_IAM \
+            --use-previous-template \
+            --parameters \
+            ParameterKey=VpcId,UsePreviousValue=true \
+            ParameterKey=Subnets,UsePreviousValue=true \
+            ParameterKey=InstanceType,UsePreviousValue=true \
+            ParameterKey=KeyName,UsePreviousValue=true \
+            ParameterKey=ImageName,ParameterValue=<new_docker-image-name> \
+            ParameterKey=AMIID,UsePreviousValue=true \
+            ParameterKey=DeployEnv,UsePreviousValue=true \
+            ParameterKey=SSHLocation,UsePreviousValue=true
