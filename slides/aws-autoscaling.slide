@@ -3,16 +3,22 @@ Deploy Auto Scaling Group via CloudFormation in AWS
 
 Carmen Lau
 
+* Infrastructure
+
+.code aws-autoscaling/infrastructure.txt
+
 * Benefit
 
 - Support horizontal scaling from day one
 - Reproducible Infrastructure
 - Reduce downtime during deployment
 
-* Infrastructure
+* Tools in this example
 
-.code aws-autoscaling/infrastructure.txt
- 
+- Packer - Tools to build the server machine images
+
+- AWS CloudFormation - Create the server infrastructure (e.g. Auto scaling group)
+
 * Create Machine Image
 
 *Tool*
@@ -62,15 +68,6 @@ More provisioners options
 3. Send success signal to CloudFormation to indicate the EC2 is ready
 
 .link https://github.com/carmenlau/deployment-sample/blob/master/autoscaling/AutoScalingRollingUpdates.template Full example 
-.link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-signal.html cfn-signal
-
-* Scaling rules
-
-.code aws-autoscaling/AutoScalingRollingUpdates.txt /3 OMIT/,/4 OMIT/
-
-* Scaling rules
-
-.code aws-autoscaling/AutoScalingRollingUpdates.txt /4 OMIT/,/5 OMIT/
 
 * Update docker image via CI
 
