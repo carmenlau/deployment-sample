@@ -1,5 +1,5 @@
 Deploy Auto Scaling Group via CloudFormation in AWS
-22 Mar 2019
+12 Apr 2019
 
 Carmen Lau
 
@@ -13,27 +13,33 @@ Carmen Lau
 - Reproducible Infrastructure
 - Reduce downtime during deployment
 
-* Tools in this example
+* Overview
 
-- Packer - Tools to build the server machine images
+1. Create server machine image (Packer)
+2. Setup server infrastructure (AWS CloudFormation)
+3. Setup CI
 
-- AWS CloudFormation - Create the server infrastructure (e.g. Auto scaling group)
-
-* Create Machine Image
+* Create Machine Image (Packer)
 
 *Tool*
 .link https://www.packer.io/ Packer - a tools to build machine images
 
+* Writing Packer Template
+
 *Demonstration*
-.link https://github.com/carmenlau/deployment-sample/tree/master/autoscaling/packer
 
-* Create packer template
-.code aws-autoscaling/ami-builder.txt
+Create AMI from ubuntu image
 
-* Provisioners
-.code aws-autoscaling/ami-provisioners.txt
+.link https://github.com/carmenlau/deployment-sample/blob/master/autoscaling/packer/
 
-More provisioners options
+* More about Packer Template
+
+- About Packer template
+
+.link https://www.packer.io/docs/templates/index.html
+
+- More provisioners options
+
 .link https://www.packer.io/docs/provisioners/shell.html
 
 * Run packer
@@ -47,27 +53,60 @@ More provisioners options
         AWS_SECRET_ACCESS_KEY=<key> \
         packer build ami.json
 
-* CloudFormation templates
+* Setup server infrastructure (AWS CloudFormation)
+
+AWS CloudFormation - describe and provision all the infrastructure resources in your cloud environment
+
+We are going to use AWS CloudFormation to deploy a stateless autoscaling group.
+
+.code aws-autoscaling/infrastructure.txt
+
+* Create CloudFormation template from aws
 
 - Find CloudFormation sample templates
-.link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-sample-templates.html Cloudformation Template
+.link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-sample-templates.html
 
 - The template that we used in the demo
 .link https://s3-ap-southeast-1.amazonaws.com/cloudformation-templates-ap-southeast-1/AutoScalingRollingUpdates.template
 
-* Update template
+* Demonstration
 
-- Parameters
+Overview
 
-.code aws-autoscaling/AutoScalingRollingUpdates.txt /1 OMIT/,/2 OMIT/
+    - Parameters
+    - Resources
+        - AutoScalingGroup
+        - LaunchConfig
+        - ApplicationLoadBalancer
+        - ALBListener
+        - ALBTargetGroup
+        - ScalingPolicy
+        - Alarm
+        - InstanceSecurityGroup
+    - Outputs
 
-* Update template - Config cloud-init via user data
+Demonstration
+
+.link https://github.com/carmenlau/deployment-sample/blob/master/autoscaling/AutoScalingRollingUpdates.template
+
+* Configure server to pull the latest code when start
 
 1. Create docker-compose.override.yml to specify the sever docker image
 2. Call the start app script to pull start start the docker image, and check if the server is ready
 3. Send success signal to CloudFormation to indicate the EC2 is ready
 
-.link https://github.com/carmenlau/deployment-sample/blob/master/autoscaling/AutoScalingRollingUpdates.template Full example 
+* Update template - Config cloud-init via user data
+
+Use cloud-init installed in the ec2 image by providing cloud config in user data
+.link https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
+
+Cloud config
+
+1. write_files
+2. runcmd
+3. ssh_authorized_keys
+
+.link https://cloudinit.readthedocs.io/en/latest/topics/examples.html More cloud config example
 
 * Update docker image via CI
 
